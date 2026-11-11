@@ -651,8 +651,147 @@ total++;
     pausar();
 }
 
-void//denme chance se me van a acabar mis datos y no tengo internet ando compartiendome
+void reporteHistorialDevoluciones(void)
+{
+    FILE *f;
+    Movimiento m;
+    Usuario u;
+    Libro l;
+    int total = 0;
 
+    encabezado("REPORTE: HISTOTRIAL DE DEVOLUCIONES");
+    f= fopen(ARCH_MOVIMIENTOS, "rb");
+    if(f =0 NULL){
+        printf("Aun no hay movimientos.\n");
+        pausar();
+        return;
+    }
+        printf("%-17s %-22s %-28s\n", "FECHA", "USUARIO", "LIBRO");
+        printf("----------------------------------------------------------\n");
+        while (fread(&m, sizeof(Movimiento), 1, f)== 1);
+        if(m-tipo != MOV_DEVOLUCION)
+            continue;
+        if(!buscarUsuariosPorId(m.idUsuario, &u, NULL))
+            strcpy(u.nombre, "(eliminado)");
+        if(!buscarLibroPorId(m.idLibro, &l, NULL))
+            strcpy(l.titulo, "(eliminado)");
+        printf("%-17s %-22s %-28s\n", m.fecha, u.nombre, l.titulo);
+        total++;
+}
+fclose(f);
+printf("\nTotal: %d devolucion(es) registrada(s)\n", total);
+pausar();
+}
+
+void reporteLibrosMasPrestados(void)
+{
+    FILE *f;
+    Libro tmp;
+    Libro lista[MAX_LIBROS];
+    int n = 0, i, j, limite;
+    encabezado("REPORTE: LIBRO MAS PRESTADOS");
+    f = fopen(ARCH_LIBROS, "rb");
+    if (f == NULL){
+        printf("NO hay libros registrados.\n");
+        pausar()
+        return;
+    }
+    while(n < MAX_LIBROS && fread(&tmp, sizeof(Libro), 1, f) == 1){
+        if (tmp.activo) {
+            lista[n] = tmp;
+            n++;
+        }
+    }
+    fclose(f);
+
+    if (n == 0){
+        printf("NO hay libros registrados.\n");
+        pausar();
+        return;
+    }
+    for (i = 0; i < n - 1; i++){
+        for (j = 0; j < n - 1; j++){
+            if(lista[j].vecesPrestado < lista[j + 1].vecesPrestado){
+                tmp = lista[j];
+                lista[j] = lista[j + 1];
+                lista[j +1] = tmp;
+            }
+        }
+    }
+    limite = (n < 10) ? n : 10;
+
+    printf("%-s %-8s %-30s %-10s\n", "TOP", "ID", "TITULO", "PRESTAMOS");
+    printf("-------------------------------------------------------------------\n");
+    for (i = 0; i < limite; i++)
+        printf("%-5d L-%04d %-30s %-10d\n", i+1, lista[i].id, lista[i].titulo, lista[i].vecesPrestado);
+    pausar();
+}
+
+void reporteUsuariosPrestamosActivos(void)
+{
+    FILE *f;
+    Usuario u;
+    int activos, total = 0;
+
+    encabezado("REPORTE: USUARIOS CON PRESTAMOS ACTIVOS");
+    f = fopen(ARCH_USUARIOS, "rb");
+    if (f == NULL){
+        printf("No hay usuarios registrados.\n");
+        pausar();
+        return;
+    }
+    printf("%-8s %-28s %-10s\n", "ID", "NOMBRE", "ACTIVOS");
+    printf("--------------------------------------------------\n");
+    while (fread(&u, sizeof(Usuario), 1, f)== 1){
+        if(!u.activo)
+            continue;
+        activos = prestamosActivosDeUsuario(u.id);
+        if(activos > 0){
+            printf("U-%04d %-28s %-10d\n", u.id, u.nombre, activos);
+            total++;
+        }
+    }
+    fclose(f);
+    if (total == 0)
+        printf ("Ningun usuario tiene prestamos activos.\n");
+    pausar();
+}
+
+void menuReportes(void)
+{
+    int op = -1;
+
+    while (op != 0){
+        encabezado("REPORTES");
+        printf("1.- Libros disponibles\n");
+        printf("2.- Libros prestados\n");
+        printf("3.- Usuarios registrados\n");
+        printf("4.- Historial de prestamos\n");
+        printf("5.- Historial de devoluciones\n");
+        printf("6.- Libros con mayor numero de prestamos\n");
+        printf("7.- Usuarios con prestamos activos\n");
+        printf("--------------------------------------------------\n");
+        op = leerEntero("Seleccione una opcion: ");
+        switch (op){
+            case 1: reporteLibrosDisponibles(); break;
+            case 2: reporteLibrosPrestados(); break;
+            case 3: reporteUsuariosRegistrados(); break;
+            case 4: reporteHistorialPrestamos(); break;
+            case 5: reporteHIstorialDevoluciones() break;
+            case 6: reporteLibrosMasPrestados() break;
+            case 7: reporteUsuariosPrestamosActivos(); break;
+            case 0; break;
+            default: printf("Opcion no valida.\n"); pausar(); break;
+        }
+    }
+}
+void consultarDevoluciones(void)
+{
+    reporteHistorialDevoluciones();
+}
+//hasta aca mi trabajo yo amet uwu
+    
+int main(){
     int opcMenu;
     int opcUsuarios;
     int opcLibros;
