@@ -401,7 +401,7 @@ total++;
     pausar();
 }
 
-void
+void//denme chance se me van a acabar mis datos y no tengo internet ando compartiendome
 
     int opcMenu;
     int opcUsuarios;
