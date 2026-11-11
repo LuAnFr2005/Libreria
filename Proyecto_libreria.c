@@ -785,6 +785,170 @@ void clasificarLibrosPorCategoria(void)
     pausar();
 }
 
+
+// el num 1
+void registrarPrestamo(void)
+{
+    Usuario u;
+    Libro l;
+    Prestamo p;
+    long posLibro;
+    int idU, idL;
+    FILE *f;
+
+    encabezado("REGISTRAR PRESTAMO");
+
+    idU = leerCodigo("1) Escanee el QR del USUARIO: ", 'U');
+    if (idU < 0 || !buscarUsuarioPorId(idU, &u, NULL)) {
+        printf("Usuario no encontrado o codigo invalido.\n");
+        pausar();
+        return;
+    }
+    printf("   -> Usuario: %s\n", u.nombre);
+
+    if (prestamosActivosDeUsuario(idU) >= MAX_PRESTAMOS) {
+        printf("El usuario ya tiene %d prestamos activos (maximo permitido).\n", MAX_PRESTAMOS);
+        pausar();
+        return;
+    }
+
+    idL = leerCodigo("2) Escanee el QR del LIBRO: ", 'L');
+    if (idL < 0 || !buscarLibroPorId(idL, &l, &posLibro)) {
+        printf("Libro no encontrado o codigo invalido.\n");
+        pausar();
+        return;
+    }
+    printf("   -> Libro: %s\n", l.titulo);
+
+    if (!l.disponible) {
+        printf("\nEl libro NO esta disponible (ya esta prestado).\n");
+        pausar();
+        return;
+    }
+
+    memset(&p, 0, sizeof(Prestamo));
+    p.id = siguienteId(ARCH_PRESTAMOS, sizeof(Prestamo));
+    p.idUsuario = idU;
+    p.idLibro = idL;
+    obtenerFecha(p.fechaPrestamo, sizeof(p.fechaPrestamo));
+    strcpy(p.fechaDevolucion, "-");
+    p.activo = 1;
+
+    f = fopen(ARCH_PRESTAMOS, "ab");
+    if (f == NULL) {
+        printf("Error al abrir el archivo de prestamos.\n");
+        pausar();
+        return;
+    }
+    fwrite(&p, sizeof(Prestamo), 1, f);
+    fclose(f);
+
+    l.disponible = 0;
+    l.vecesPrestado++;
+    f = fopen(ARCH_LIBROS, "r+b");
+    if (f == NULL) {
+        printf("Error al actualizar el libro.\n");
+        pausar();
+        return;
+    }
+    fseek(f, posLibro * (long)sizeof(Libro), SEEK_SET);
+    fwrite(&l, sizeof(Libro), 1, f);
+    fclose(f);
+
+    registrarMovimiento(MOV_PRESTAMO, idU, idL);
+    printf("\nPrestamo registrado correctamente (%s).\n", p.fechaPrestamo);
+    pausar();
+}
+
+void consultarPrestamos(void)
+{
+    FILE *f;
+    Prestamo p;
+    Usuario u;
+    Libro l;
+    int total = 0;
+
+    encabezado("PRESTAMOS ACTIVOS");
+    f = fopen(ARCH_PRESTAMOS, "rb");
+    if (f == NULL) {
+        printf("No hay prestamos registrados.\n");
+        pausar();
+        return;
+    }
+    printf("%-17s %-22s %-28s\n", "FECHA", "USUARIO", "LIBRO");
+    printf("-----------------------------------------------------------------\n");
+    while (fread(&p, sizeof(Prestamo), 1, f) == 1) {
+        if (!p.activo)
+            continue;
+        if (!buscarUsuarioPorId(p.idUsuario, &u, NULL))
+            strcpy(u.nombre, "(eliminado)");
+        if (!buscarLibroPorId(p.idLibro, &l, NULL))
+            strcpy(l.titulo, "(eliminado)");
+        printf("%-17s %-22s %-28s\n", p.fechaPrestamo, u.nombre, l.titulo);
+        total++;
+    }
+    fclose(f);
+    if (total == 0)
+        printf("No hay prestamos activos.\n");
+    else
+        printf("\nTotal: %d prestamo(s) activo(s)\n", total);
+    pausar();
+}
+
+void registrarDevolucion(void)
+{
+    Libro l;
+    Prestamo p;
+    Usuario u;
+    long posLibro, posPrestamo;
+    int idL;
+    FILE *f;
+
+    encabezado("REGISTRAR DEVOLUCION");
+
+    idL = leerCodigo("Escanee el QR del LIBRO: ", 'L');
+    if (idL < 0 || !buscarLibroPorId(idL, &l, &posLibro)) {
+        printf("Libro no encontrado o codigo invalido.\n");
+        pausar();
+        return;
+    }
+    printf("   -> Libro: %s\n", l.titulo);
+
+    if (l.disponible || !libroPrestadoActivo(idL, &p, &posPrestamo)) {
+        printf("\nEste libro no tiene un prestamo activo.\n");
+        pausar();
+        return;
+    }
+    if (buscarUsuarioPorId(p.idUsuario, &u, NULL))
+        printf("   -> Prestado a: %s (desde %s)\n", u.nombre, p.fechaPrestamo);
+
+    p.activo = 0;
+    obtenerFecha(p.fechaDevolucion, sizeof(p.fechaDevolucion));
+    f = fopen(ARCH_PRESTAMOS, "r+b");
+    if (f == NULL) {
+        printf("Error al abrir el archivo de prestamos.\n");
+        pausar();
+        return;
+    }
+    fseek(f, posPrestamo * (long)sizeof(Prestamo), SEEK_SET);
+    fwrite(&p, sizeof(Prestamo), 1, f);
+    fclose(f);
+
+    l.disponible = 1;
+    f = fopen(ARCH_LIBROS, "r+b");
+    if (f == NULL) {
+        printf("Error al actualizar el libro.\n");
+        pausar();
+        return;
+    }
+    fseek(f, posLibro * (long)sizeof(Libro), SEEK_SET);
+    fwrite(&l, sizeof(Libro), 1, f);
+    fclose(f);
+
+    registrarMovimiento(MOV_DEVOLUCION, p.idUsuario, idL);
+    printf("\nDevolucion registrada correctamente (%s).\n", p.fechaDevolucion);
+    pausar();
+}
 //amet parte 3
 void reporteLibrosDisponibles(void)
 {
