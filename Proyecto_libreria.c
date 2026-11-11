@@ -303,6 +303,237 @@ void registrarMovimiento(int tipo, int idUsuario, int idLibro)
     fwrite(&m, sizeof(Movimiento), 1, f);
     fclose(f);
 }
+//acabo adrian
+
+//JARED PARTE 5
+voit crearUsuario(void) 
+{
+    usuario u;
+    FILE *;
+    char resp[LEN];
+
+    encabezado("CREAR USUARIO");
+    memset(&u, 0, sizeof(usuario));
+
+    leer cadena ("Nombre completo: ", u.nombre, LEN);
+    if (u.nombre [0] == '\0') { 
+        printf ("el nombre no puede estar vacio .\n");
+        pausar (); 
+        return; 
+    }
+    leerCadena("matricula:", u.matricula, LEN);
+    leerCadena ("correo: ", u.correo, LEN);
+    leerCadena ("relefono ",u.telefono, 20);
+    u.id = siguienteId(ARCH_USUARIOS, sizeof(usuario)));
+    u.activo = 1;
+
+f = fopen (ARCH_USUARIOS, "ab");
+if (f == NULL ) { 
+    printf ("error: no se pudo abrir el archivo de usuarios .\n");
+    pausar ();
+    return;
+{
+    if (f == NULL) {
+    }
+    fwrite(&u, sizeof(usuario), 1, f);
+    fclose(f);
+    printf ("\nUsuario registrado con ID unico: U-%04d\n", u.id);
+    if (generarQR('U', u.id)) {
+        leerCadena("desea abrir la imagen del QR para imprimirla? (s/n):", resp, LEEN);
+        if (resp[0] == 's' || resp[0] == 's') 
+            mostrarQR ('U', u.id);
+    }
+    pausar();
+}
+void borrarUsuario(void)
+{
+    usuario u;
+    long pos; 
+    int id;
+    char resp[LEN ];
+    FILE *f;
+
+    encabezado("BORRAR USUARIO");
+    id =leercodigo("escanee el QR del usuario (o escriba su ID ); ", 'U');
+    if ((id < 0 || !buscarusuarioporid(id,&u, &pos)) {
+        printf("usuario no encontrado .\n");
+        pausar();
+        return;
+}
+    if (prestamosActivosDeUsuario(id) > 0) {
+        printf (" no se puede eliminar: el usuario tiene prestamos activos .\n");
+        pausar ();
+        return;
+    }
+    printf ("usuario: %s (u-%04d", u.nombre , u.id 9;
+    leerCadena ("confirma que desea eliminarlo? s/n): ", resp, LEEN); 
+    if (resp[0] != 's'&& resp[0] != 's' ) { 
+        pintf ("operacion cancelada.\");
+            pausar();
+        return;
+    }
+    u.activo =0;
+    f = fopen(ARCH-USUARIOS , "r+b");
+    if (f== NULL) { 
+        printf ("eror al abrir el archivo .\n");
+        pausar();
+        return;
+    }
+    fseek(f, pos *(long)sizeof(usuario), SEEK-SET);
+    fwite(&u sizeof(usuario), 1, f);
+    fclose (f);
+    printf("usuario eliminado .\n"); 
+    pausar();
+}
+void editar usuario (void)
+{
+    usuario u;
+    lung pos; 
+    int id;
+    char tmp [LEEN];
+    FILE *F;
+
+    encabezado("EDITAR DATOS DE USUARIO");
+    id = leercodigo("escanee el QR del usuario (o escriba ud ID): ", 'U');
+    if (id < 0 || !buscarUsuarioporid(id,&u, &pos)) { 
+        printf("Usuario no encontrado .\n");
+        pausar(); 
+        return;
+}
+    printf ("(deje vacio y precione ENTER para conservar el dato actual )\n\n");
+
+printf ("Nombre actual: %s\n",u.nombre);
+leerCadena("Nuevo nombre : ", tmp, LEN);
+if (tmp[0] != '\0') strcpy(u.nombre , tmp);
+
+printf("Matricula actual: %s\n", u.nombre);
+leerCadena("nuevo matricula: " , tmp , LEN);
+if (tmp[0] != '\0') strcpy(u.nombre, tmp);
+
+printf("correo actual: %s\n", u.correo );
+leerCadena("Nueva correo: ", tmp, LEN);
+if (tmp[0] != '\0') strcpy(u.correo, tmp);
+
+printf ("Telefono actual: %s\n", u.telefono); 
+leerCadena("Nuevo telefono: ", tmp, 20);
+if(tmp[0] != '\0') strcpy(u.telefono, tmp);
+
+f = fopen (ARCH_USUARIOS, "r+b");
+if (f == NULL) {
+    printf ("Error al abrir el archivo.\n");
+    pasuar ();
+    return;
+}
+fseek (f,pos * (long)sizeof(usuario), SEEK_SET);
+fwrite(&u, sizeof(usuario), 1, f);
+fclose(f);
+printf ("\nDatos actulizados.\n");
+pausar();
+}
+
+void buscarUsuario(void)
+{
+    FILE *f;
+    Usuario u;
+    char texto [LEN],
+    int encontrados = 0;
+    int idbuscado;
+
+    encabezado ("BUSCAR USUARIO");
+leerCadena ("Nombre, matricula o codigo (U-0001): ", texto, LEN);
+idBuscado = (texto[0] !- '\e' && (isdigit((unsigned char) texto[®]) ||
+            toupper ((unsigned char)texto[0]) -- 'U' ) && 
+            (strchr(texto, '-') |- NULL || isdigit((unsigned char) texto[®])))
+             ? atoi (strchr(texto, '-') ? strchr(texto, '-') + 1 : texto) : -1;
+
+        f = fopen(ARCH_USUARIOS, "rb");
+    if (f == NULL) {
+        printf("No hay usuarios registrados.\n");
+        pausar();
+        return;
+    }
+    printf("\n%-8s %-25s %-14s %-20s\n", "ID", "NOMBRE", "MATRICULA", "TELEFONO");
+    printf("----------------------------------------------------------------\n");
+    while (fread(&u, sizeof(Usuario), 1, f) == 1) {
+        if (!u.activo)
+            continue;
+        if (contieneTexto(u.nombre, texto) || contieneTexto(u.matricula, texto) ||
+            (idBuscado > 0 && u.id == idBuscado)) {
+            printf("U-%04d  %-25s %-14s %-20s\n", u.id, u.nombre, u.matricula, u.telefono);
+            encontrados++;
+        }
+    }
+fclose(f);
+    if (encontrados == 0)
+        printf("Sin resultados.\n");
+    pausar();
+}
+
+void consultarUsuarios(void)
+{
+    FILE *f;
+    Usuario u;
+    int total = 0;
+
+    encabezado("USUARIOS REGISTRADOS");
+    f = fopen(ARCH_USUARIOS, "rb");
+    if (f == NULL) {
+        printf("No hay usuarios registrados.\n");
+        pausar();
+        return;
+    }
+    printf("%-8s %-25s %-14s %-25s\n", "ID", "NOMBRE", "MATRICULA", "CORREO");
+    printf("--------------------------------------------------------------------\n");
+    while (fread(&u, sizeof(Usuario), 1, f) == 1) {
+        if (u.activo) {
+            printf("U-%04d  %-25s %-14s %-25s\n", u.id, u.nombre, u.matricula, u.correo);
+            total++;
+        }
+    }
+fclose(f);
+    printf("\nTotal: %d usuario(s)\n", total);
+    pausar();
+}
+
+void consultarHistorialUsuario(void)
+{
+    Usuario u;
+    Libro l;
+    Movimiento m;
+    FILE *f;
+    int id, total = 0;
+
+    encabezado("HISTORIAL DE USUARIO");
+    id = leerCodigo("Escanee el QR del usuario (o escriba su ID): ", 'U');
+    if (id < 0 || !buscarUsuarioPorId(id, &u, NULL)) {
+        printf("Usuario no encontrado.\n");
+        pausar();
+        return;
+    }
+    printf("\nUsuario: %s (U-%04d)\n\n", u.nombre, u.id);
+    f = fopen(ARCH_MOVIMIENTOS, "rb");
+    if (f == NULL) {
+        printf("Sin movimientos.\n");
+        pausar();
+        return;
+    }
+    printf("%-17s %-12s %-8s %-30s\n", "FECHA", "MOVIMIENTO", "LIBRO", "TITULO");
+    printf("------------------------------------------------------------------\n");
+    while (fread(&m, sizeof(Movimiento), 1, f) == 1) {
+        if (m.idUsuario != id)
+            continue;
+        if (!buscarLibroPorId(m.idLibro, &l, NULL))
+            strcpy(l.titulo, "(libro eliminado)");
+        printf("%-17s %-12s L-%04d  %-30s\n", m.fecha,
+               m.tipo == MOV_PRESTAMO ? "Prestamo" : "Devolucion",
+               m.idLibro, l.titulo);
+        total++;
+    }
+    fclose(f);
+    if (total == 0)
+        printf("Sin movimientos.\n");
+    pausar();
+}
 
 //Carlos
 void registrarLibro(void)
