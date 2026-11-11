@@ -304,6 +304,7 @@ void registrarMovimiento(int tipo, int idUsuario, int idLibro)
     fclose(f);
 }
 
+//Carlos
 void registrarLibro(void)
 {
     Libro l;
