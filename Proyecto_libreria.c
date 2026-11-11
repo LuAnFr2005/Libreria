@@ -304,6 +304,255 @@ void registrarMovimiento(int tipo, int idUsuario, int idLibro)
     fclose(f);
 }
 
+void registrarLibro(void)
+{
+    Libro l;
+    FILE *f;
+    char resp[LEN];
+
+    encabezado("REGISTRAR LIBRO")
+    memset(&l, 0, sizeof(Libro));
+
+    leerCadena("Titulo: ", l.titulo, LEN);
+    if (l.titulo[0] == '\0')
+    {
+        printf("El Titulo no puede estar vacio.\n");
+        pausar();
+        return;
+    }
+    leerCadena("Autor: ", l.autor, LEN);
+    leerCadena("Categoria (Ej. Ciencia, Novela, Historia)", l.categoria, LEN);
+    if (l.categoria[0]== '\0')
+        strcpy(l.categoria, "GENERAL");
+    l.id= siguienteId(ARCH_LIBROS, sizeof(Libro));
+    l.disponible=1;
+    l.vecesPrestado=0;
+    l.activo=1;
+
+    f=fopen(ARCH_LIBROS, "ab");
+    if (f == NULL)
+    {
+        printf ("Error: No se puede abrir el archivo de libroa.\n");
+        pausar();
+        return;
+    }
+
+    fwrite(&l sizeof(Libro), l, f);
+    fclose (f);
+
+    printf("\n Libro registrado con ID unico L-%04d\n", l.id);
+    if (generarQR('L', l.id));
+    {
+        leerCadena("Desea abrir la imagen del QR para imprimirla ? (s/n)", resp, LEN);
+        if (resp[0]== 's' || resp[0]== 'S')
+        mostrarQr('L', l.id);
+    }
+
+    pausar();
+        
+}
+
+void modificarLibro(void)
+{
+    Libro 1;
+    long pos;
+    int id;
+    chr tmp [LEN];
+    FILE *f;
+
+    encabezado ("MODIFICAR LIBRO");
+    id = leerCodigo("Escanee el QR del libro (o ingrese su ID): ",'L' );
+    if (id<0 || !buscarLibroPorId(id, &l, &pos))
+    {
+        printf("Libro no encontrado");
+        pausar();
+        return;
+    }
+    printf("(Deje vacio y presione ENTER para conservar el dato actual.)\n\n");
+    
+    printf("Titulo actual: %s\n", l.titulo);
+    leerCadena("Nuevo titulo: ", tmp, LEN);
+    if (tmp[0] != '\0') strcpy (l.titulo, tmp);
+
+    printf("Autor actual: %s\n", l.titulo);
+    leerCadena("Nuevo autor: ", tmp, LEN);
+    if (tmp[0] != '\0') strcpy (l.autor, tmp);
+
+    printf("Categoria actual: %s\n", l.titulo);
+    leerCadena("Nueva categoria : ", tmp, LEN);
+    if (tmp[0] != '\0') strcpy (l.categoria, tmp);
+
+    f = fopen (ARCH_LIBROS, "r+b");
+    if (f == NULL)
+    {
+        printf ("Error al abrir el archivo\n");
+        pausar();
+        return;
+    }
+    fseek(f, pos * (long)sizeof(Libro), SEEK_SET);
+    fwrite(&l, sizeof(Libro), 1, f);
+    fclose(f);
+    printf("Libro actualizado.\n");
+    pausar();
+}
+
+void eliminarLibro(void)
+{
+    Libro l;
+    long pos;
+    int id;
+    char resp [LEN];
+    FILE *f;
+
+    encabezado("ELIMINAR LIBRO");
+    id = leerCodigo ("Escanee el QR (o escriba su ID): ", 'L' );
+    if (id<0 || !buscarLibroporId(id, &l, &pos))
+    {
+      printf("Libro no encontrado.\n");
+        pausar();
+        return;
+    }
+
+    if (!l.disponible)
+    {
+        printf("No se puede eliminar: El libro esta prestado actualmente");
+        pausar ();
+        return;
+    }
+    printf("Libro: %s (L-%04d)\n", l.titulo, l.id);
+    leerCadena("Confirmar que desea borrarlo? (s/n): ", resp, LEN);
+    if (resp[0] != 's' || resp[0] != 'S')
+    {
+        printf("Operacion cancelada\n");
+        pausar();
+        return;
+    }
+
+    l.activo=0;
+    f=fopen(ARCH_LIBROS, "r+b");
+    if (f == NULL)
+    {
+        printf("Error al abrir el archivo.\n");
+        pausar();
+        return;
+    }
+
+    fseek(f, pos * (long)sizeof(Libro), SEEK_SET);
+    fwrite(&l, sizeof(Libro), 1, f);
+    fclose(f);
+    printf("Libro eliminado.\n");
+    pausar();
+}
+
+void buscarLibro(void)
+{
+    FILE *f;
+    Libro l;
+    char texto[LEN];
+    int encontrados = 0;
+    int idBuscado;
+
+    encabezado("BUSCAR LIBRO");
+    leerCadena("Titulo, autor, categoria o codigo (L-0001): ", texto, LEN);
+    idBuscado = (texto[0] != '\0' && (isdigit((unsigned char)texto[0]) ||
+                 toupper((unsigned char)texto[0]) == 'L') &&
+                 (strchr(texto, '-') != NULL || isdigit((unsigned char)texto[0])))
+                 ? atoi(strchr(texto, '-') ? strchr(texto, '-') + 1 : texto) : -1;
+
+    f = fopen(ARCH_LIBROS, "rb");
+    if (f == NULL) {
+        printf("No hay libros registrados.\n");
+        pausar();
+        return;
+    }
+    printf("\n%-8s %-28s %-18s %-12s %-10s\n", "ID", "TITULO", "AUTOR", "CATEGORIA", "ESTADO");
+    printf("--------------------------------------------------------------------------------\n");
+    while (fread(&l, sizeof(Libro), 1, f) == 1) {
+        if (!l.activo)
+            continue;
+        if (contieneTexto(l.titulo, texto) || contieneTexto(l.autor, texto) ||
+            contieneTexto(l.categoria, texto) || (idBuscado > 0 && l.id == idBuscado)) {
+            printf("L-%04d  %-28s %-18s %-12s %-10s\n", l.id, l.titulo, l.autor,
+                   l.categoria, l.disponible ? "Disponible" : "Prestado");
+            encontrados++;
+        }
+    }
+    fclose(f);
+    if (encontrados == 0)
+        printf("Sin resultados.\n");
+    pausar();
+}
+
+void consultarDisponibilidad(void)
+{
+    Libro l;
+    Prestamo p;
+    Usuario u;
+    int id;
+
+    encabezado("CONSULTAR DISPONIBILIDAD");
+    id = leerCodigo("Escanee el QR del libro (o escriba su ID): ", 'L');
+    if (id < 0 || !buscarLibroPorId(id, &l, NULL)) {
+        printf("Libro no encontrado.\n");
+        pausar();
+        return;
+    }
+    printf("\nLibro:     %s (L-%04d)\n", l.titulo, l.id);
+    printf("Autor:     %s\n", l.autor);
+    printf("Categoria: %s\n", l.categoria);
+    printf("Estado:    %s\n", l.disponible ? "DISPONIBLE" : "PRESTADO");
+    if (!l.disponible && libroPrestadoActivo(id, &p, NULL)) {
+        if (buscarUsuarioPorId(p.idUsuario, &u, NULL))
+            printf("Prestado a: %s desde %s\n", u.nombre, p.fechaPrestamo);
+    }
+    pausar();
+}
+
+void clasificarLibrosPorCategoria(void)
+{
+    FILE *f;
+    Libro lista[MAX_LIBROS];
+    Libro tmp;
+    int n = 0, i, j, yaVista;
+
+    encabezado("LIBROS POR CATEGORIA");
+    f = fopen(ARCH_LIBROS, "rb");
+    if (f == NULL) {
+        printf("No hay libros registrados.\n");
+        pausar();
+        return;
+    }
+    while (n < MAX_LIBROS && fread(&tmp, sizeof(Libro), 1, f) == 1) {
+        if (tmp.activo) {
+            lista[n] = tmp;
+            n++;
+        }
+    }
+    fclose(f);
+
+    if (n == 0) {
+        printf("No hay libros registrados.\n");
+        pausar();
+        return;
+    }
+    for (i = 0; i < n; i++) {
+
+        yaVista = 0;
+        for (j = 0; j < i; j++)
+            if (strcmp(lista[j].categoria, lista[i].categoria) == 0)
+                yaVista = 1;
+        if (yaVista)
+            continue;
+
+        printf("\n[ %s ]\n", lista[i].categoria);
+        for (j = 0; j < n; j++)
+            if (strcmp(lista[j].categoria, lista[i].categoria) == 0)
+                printf("   L-%04d  %-30s %-18s %s\n", lista[j].id, lista[j].titulo,
+                       lista[j].autor, lista[j].disponible ? "Disponible" : "Prestado");
+    }
+    pausar();
+}
+
 //amet parte 3(yo)
 void reporteLibrosDisponibles(void)
 {
