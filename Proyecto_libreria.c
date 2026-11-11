@@ -554,7 +554,7 @@ void clasificarLibrosPorCategoria(void)
     pausar();
 }
 
-//amet parte 3(yo)
+//amet parte 3
 void reporteLibrosDisponibles(void)
 {
 FILE *f;
