@@ -304,10 +304,104 @@ void registrarMovimiento(int tipo, int idUsuario, int idLibro)
     fclose(f);
 }
 
+//amet parte 3(yo)
+void reporteLibrosDisponibles(void)
+{
+FILE *f;
+Libro l;
+int total=0;
 
+encabezado("REPORTE: LUBROS DISPONIBLES");
+f= fopen(ARCH_LIBROS, "rb");
+if (f== NULL){
+printf("No hay libros registrados.\n");
+pausar();
+return;
+}
+printf("%-8s %-30s %-20s %-12s\n", "ID", "TITULO", "AUTOR", "CATEGORIA");
+printf("-----------------------------------------------------------------------\n");
+while (fread(&l, sizeof(Libro), 1, f)==1){
+if(l.activo && l.disponible){
+printf("L-%04d %-30s %-20s %-12s\n", l.id, l.titulo, l.autor, l.categoria);
+total++;
+}
+}
+fclose(f);
+printf("\nTotal: %d libro(s) disponible(s)\n", total);
+pausar();
+}
 
+void reporteLibrosPretados(void)
+{
+FILE *f;
+Libro l;
+Prestamo p;
+Usuario u;
+int total=0;
 
-int main(){
+encabezado ("REPORTE: LIBROS PRESTADOS");
+f = fopen(ARCH_LIBROS, "rb");
+if (f == NULL){
+printf("No hay libros registrados.\n");
+pausar ();
+return;
+}
+printf("%-8s %-28s %-22s %-17s\n", "ID", "TITULO", "PRESTADO A", "DESDE");
+printf("-------------------------------------------------------------------------\n");
+while (fread (&l, sizeof(Libro),1,f)==1){
+if(l.activo && !l.disponible){
+strcpy(u.nombre, "(desconocido)");
+strcpy(p.fechaPrestamo, "-");
+if (libroPrestadoActivo(l.id,&p, NULL))
+    if (!buscarUsuarioPorId(p.idUsuario,&u,NULL))
+        strcpy(u.nombre,"(eliminado)");
+printf("L-%04d %-28s %-22s %-17s\n", l.id,l.titulo, u.nombre,p.fechaPrestamo);
+total++;
+}
+}
+fclose(f);
+printf("\nTotal: %d libros(s) prestado(s) \n", total);
+pausar();
+}
+
+void reporteUsuariosRegistrados(void)
+{
+consultarUsuarios();
+}
+
+void reporteHistorialPrestamos(void)
+{
+FILE *f;
+Movimiento m;
+Usuario u;
+Libro l;
+int total= 0;
+
+encabezado("REPORTE: HISTORIAL DE PRESTAMOS");
+f = fopen(ARCH_MOVIMIENTOS, "rb");
+if (f == NULL){
+printf("aun no hay movimientos.\n");
+pausar()
+    return;
+}
+printf("%-17s %-22s %-28s\n", "FECHA", "USUARIO", "LIBRO");
+printf("-------------------------------------------------------------------\n");
+while(fread(&m, sizeof(Movimiento), 1, f)==1){
+if(m.tipo != MOV_PRESTAMO)
+    continue;
+if (!buscarUsuarioPorId(m.idUsuario, &u, NULL))
+    strcpy(u.nombre, "(eliminado)");
+if(!buscarLibroPorId(m.idLibro, &l, NULL))
+    strcpy(l.titulo,"(eliminado)");
+printf("%-17s %-22s %-28s\n", m.fecha, u.nombre, l.titulo);
+total++;
+}
+    fclose(f);
+    printf("\nTotal: %d prestamo(s) registrados(s)\n", total);
+    pausar();
+}
+
+void
 
     int opcMenu;
     int opcUsuarios;
