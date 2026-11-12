@@ -1184,6 +1184,7 @@ void consultarDevoluciones(void)
 //hasta aca mi trabajo yo amet uwu
     
 int main(){
+
     int opcMenu;
     int opcUsuarios;
     int opcLibros;
@@ -1202,10 +1203,12 @@ int main(){
         printf("2. Libros\n");
         printf("3. Prestamos\n");
         printf("4. Devoluciones\n");
+        printf("5. Reportes\n");
         printf("0. Salir\n");
         printf("----------------------------------------------\n");
         printf("Seleccione una opcion: ");
         scanf("%d", &opcMenu);
+        limpiarBuffer();
 
         switch (opcMenu){
 
@@ -1220,33 +1223,20 @@ int main(){
                 printf("1. Crear usuario\n");
                 printf("2. Borrar usuario\n");
                 printf("3. Administrar usuario\n");
+                printf("4. Buscar usuario\n");
+                printf("5. Consultar usuarios registrados\n");
                 printf("0. Regresar al menu principal\n");
                 printf("----------------------------------------------\n");
                 printf("Seleccione una opcion: ");
                 scanf("%d", &opcUsuarios);
-                    
+                limpiarBuffer();
+
                 switch (opcUsuarios){
                     case 1:
-                        system("cls");
-                        printf("==============================================\n");
-                        printf("             CREAR USUARIO\n");
-                        printf("==============================================\n");
-                        printf("aqui se crea el usuario\n");
-                        printf("no tenemos aun la generacion qr ai que por ahora solo es un menu y ya\n");
-                        printf("precione enter para continuar\n");
-                        getchar();
-                        getchar();
+                        crearUsuario();
                         break;
                     case 2:
-                        system("cls");
-                        printf("==============================================\n");
-                        printf("             BORRAR USUARIO\n");
-                        printf("==============================================\n");
-                        printf("aqui se borra el usuario\n");
-                        printf("no tenemos aun la generacion qr ai que por ahora solo es un menu y ya\n");
-                        printf("precione enter para continuar\n");
-                        getchar();
-                        getchar();
+                        borrarUsuario();
                         break;
                     case 3:
                         system("cls");
@@ -1258,29 +1248,16 @@ int main(){
                             printf("0. Regresar\n");
                             printf("seleccione una opcion: ");
                             scanf("%d", &opcUsuarios);
+                            limpiarBuffer();
 
                             switch (opcUsuarios)
                             {
                             case 1:
-                                printf("==============================================\n");
-                                printf("             EDITAR DATOS\n");
-                                printf("==============================================\n");
-                                printf("aqui se editan los datos del usuario\n");
-                                printf("no tenemos aun la generacion qr ai que por ahora solo es un menu y ya\n");
-                                printf("precione enter para continuar\n");
-                                getchar();
-                                getchar();
+                                editarUsuario();
                                 opcUsuarios = -1;
                                 break;
                             case 2:
-                                printf("==============================================\n");
-                                printf("             CONSULTAR HISTORIAL\n");
-                                printf("==============================================\n");
-                                printf("aqui se consulta el historial del usuario\n");
-                                printf("no tenemos aun la generacion qr ai que por ahora solo es un menu y ya\n");
-                                printf("precione enter para continuar\n");
-                                getchar();
-                                getchar();
+                                consultarHistorialUsuario();
                                 opcUsuarios = -1;
                                 break;
                             case 0:
@@ -1289,21 +1266,22 @@ int main(){
                             default:
                                 system("cls");
                                 printf("Opción no válida.\n");
-                                printf("Precione enter para continuar\n");
-                                getchar();
-                                getchar();
+                                pausar();
                                 opcUsuarios = -1;
                                 break;
                             }
                         break;
+                    case 4:
+                        buscarUsuario();
+                        break;
+                    case 5:
+                        consultarUsuarios();
+                        break;
                     case 0:
-                        salir = 1;
                         break;
                     default:
                         printf("Opción no válida.\n");
-                        printf("Precione enter para continuar\n");
-                        getchar();
-                        getchar();
+                        pausar();
                         opcUsuarios = -1;
                         break;
                     }
@@ -1324,11 +1302,40 @@ int main(){
                 printf("3. Eliminar libro\n");
                 printf("4. Buscar libro\n");
                 printf("5. Consultar disponibilidad\n");
+                printf("6. Clasificar libros por categoria\n");
                 printf("0. Regresar al menu principal\n");
                 printf("Seleccione una opcion: ");
                 scanf("%d", &opcLibros);
+                limpiarBuffer();
+
+                switch (opcLibros){
+                    case 1:
+                        registrarLibro();
+                        break;
+                    case 2:
+                        modificarLibro();
+                        break;
+                    case 3:
+                        eliminarLibro();
+                        break;
+                    case 4:
+                        buscarLibro();
+                        break;
+                    case 5:
+                        consultarDisponibilidad();
+                        break;
+                    case 6:
+                        clasificarLibrosPorCategoria();
+                        break;
+                    case 0:
+                        break;
+                    default:
+                        printf("Opción no válida.\n");
+                        pausar();
+                        break;
+                }
             }
-            
+
             break;
         case 3:
             opcPrestamos = -1;
@@ -1344,8 +1351,24 @@ int main(){
             printf("0. Regresar al menu principal\n");
             printf("Seleccione una opcion: ");
             scanf("%d", &opcPrestamos);
-            break;
+            limpiarBuffer();
+
+            switch (opcPrestamos){
+                case 1:
+                    registrarPrestamo();
+                    break;
+                case 2:
+                    consultarPrestamos();
+                    break;
+                case 0:
+                    break;
+                default:
+                    printf("Opción no válida.\n");
+                    pausar();
+                    break;
+                }
             }
+            break;
         case 4:
             opcDevoluciones = -1;
             while (opcDevoluciones != 0){
@@ -1358,16 +1381,33 @@ int main(){
                 printf("0. Regresar al menu principal\n");
                 printf("Seleccione una opcion: ");
                 scanf("%d", &opcDevoluciones);
+                limpiarBuffer();
+
+                switch (opcDevoluciones){
+                    case 1:
+                        registrarDevolucion();
+                        break;
+                    case 2:
+                        consultarDevoluciones();
+                        break;
+                    case 0:
+                        break;
+                    default:
+                        printf("Opción no válida.\n");
+                        pausar();
+                        break;
+                }
             }
+            break;
+        case 5:
+            menuReportes();
             break;
         case 0:
             salir = 1;
             break;
         default:
             printf("Opción no válida.\n");
-            printf("Precione enter para continuar\n");
-            getchar();
-            getchar();
+            pausar();
             break;
         }
     }
