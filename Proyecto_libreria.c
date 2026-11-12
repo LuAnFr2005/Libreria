@@ -1,11 +1,62 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <ctype.h>
 
+#define ARCH_USUARIOS    "usuarios.dat"
+#define ARCH_LIBROS      "libros.dat"
+#define ARCH_PRESTAMOS   "prestamos.dat"
+#define ARCH_MOVIMIENTOS "movimientos.dat"
+#define CARPETA_QR       "qr_codes"
 
+#define LEN              60
+#define MAX_LIBROS       500
+#define MAX_PRESTAMOS    3
 
+#define MOV_PRESTAMO     1
+#define MOV_DEVOLUCION   2
 
+#ifdef _WIN32
+    #define CMD_LIMPIAR "cls"
+#else
+    #define CMD_LIMPIAR "clear"
+#endif
 
+typedef struct {
+    int  id;
+    char nombre[LEN];
+    char matricula[LEN];
+    char correo[LEN];
+    char telefono[20];
+    int  activo;
+} Usuario;
 
+typedef struct {
+    int  id;
+    char titulo[LEN];
+    char autor[LEN];
+    char categoria[LEN];
+    int  disponible;
+    int  vecesPrestado;
+    int  activo;
+} Libro;
+
+typedef struct {
+    int  id;
+    int  idUsuario;
+    int  idLibro;
+    char fechaPrestamo[20];
+    char fechaDevolucion[20];
+    int  activo;
+} Prestamo;
+
+typedef struct {
+    int  tipo;
+    int  idUsuario;
+    int  idLibro;
+    char fecha[20];
+} Movimiento;
 
 void limpiarPantalla(void){
     system(CMD_LIMPIAR)
